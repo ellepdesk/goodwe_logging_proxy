@@ -13,6 +13,7 @@ serverPort = 8180
 
 events = Queue()
 
+
 def goodwe_decode(event):
     logging.info(decode(event['data']))
 
