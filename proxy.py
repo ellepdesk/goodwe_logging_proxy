@@ -16,6 +16,7 @@ events = Queue()
 def goodwe_decode(event):
     logging.info(decode(event['data']))
 
+
 class ProxyProcessor():
     def __init__(self):
         self._stop = Event()
@@ -32,8 +33,9 @@ class ProxyProcessor():
         while not self._stop.is_set():
             event = events.get()
             if event:
+                logging.debug(f"Processing: {event}")
+
                 if event['url'] in self.parsers:
-                    # logging.info(f"Processing: {event}"
                     self.parsers[event["url"]](event)
 
     def start(self):
@@ -56,21 +58,31 @@ class PostProxy(BaseHTTPRequestHandler):
         event = {
             "url": url,
             "data": post_data,
-            "headers": self.headers}
+            "headers": {k: v for k, v in self.headers.items()}
+        }
 
-        logging.info(f"POST: {url}, {post_data}")
+        logging.debug(f"POST: {url}, {post_data}")
         r = requests.post(url, post_data, headers=self.headers)
 
         event["status_code"] = r.status_code
         event["response"] = r.content
         event["response_headers"] = r.headers
-        # self.send_response(r.status_code)
-        # for h, val in r.headers.items():
-        #     self.send_header(h, val)
-        # self.end_headers()
 
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
+        self.send_response(r.status_code)
+
+        try:
+            r.headers.pop("Transfer-Encoding")
+        except KeyError:
+            pass
+
+        try:
+            r.headers.pop("Connection")
+        except KeyError:
+            pass
+
+        for h, val in r.headers.items():
+            self.send_header(h, val)
+
         self.end_headers()
         self.wfile.write(r.content)
 
@@ -92,4 +104,4 @@ if __name__ == "__main__":
         pass
 
     webServer.server_close()
-    print("Server stopped.")
+    logging.info("Server stopped")

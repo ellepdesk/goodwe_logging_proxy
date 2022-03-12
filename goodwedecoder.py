@@ -17,6 +17,7 @@ def decode(payload):
         "kwh_total": int.from_bytes(payload[44:48], "big") / 10,
         "hours_total": int.from_bytes(payload[48:52], "big"),
         # "unknown_3": payload[52:64].hex(),
-        # "country": payload[63:64].hex(), # maybe?
+        # "country": payload[62:64].hex(), # maybe?
         "kwh_daily": int.from_bytes(payload[64:66], "big") / 10,
     }
+
