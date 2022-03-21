@@ -1,6 +1,5 @@
 """Platform for sensor integration."""
 from __future__ import annotations
-
 import logging
 
 from homeassistant.components.sensor import (
@@ -73,17 +72,17 @@ sensors = {
     'kwh_total': {
         "uom": ENERGY_KILO_WATT_HOUR,
         "device_class": SensorDeviceClass.ENERGY,
-        "state_class": SensorStateClass.MEASUREMENT
+        "state_class": SensorStateClass.TOTAL_INCREASING
     },
     'hours_total': {
         "uom": TIME_HOURS,
         "device_class": "on_hours",
-        "state_class": SensorStateClass.MEASUREMENT
+        "state_class": SensorStateClass.TOTAL_INCREASING
     },
     'kwh_daily': {
         "uom": ENERGY_KILO_WATT_HOUR,
         "device_class": SensorDeviceClass.ENERGY,
-        "state_class": SensorStateClass.MEASUREMENT
+        "state_class": SensorStateClass.TOTAL_INCREASING
     },
 }
 
