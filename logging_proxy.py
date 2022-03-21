@@ -1,19 +1,17 @@
 import logging
-from goodwedecoder import decode
 from aiohttp import web
 from aiohttp import ClientSession
 from datetime import datetime as dt
+from .const import DOMAIN
 
 hostName = "localhost"
 serverPort = 8180
 
-
-def goodwe_decode(event):
-    logging.info(f"GOODWE: {decode(event['data'])}")
+logger = logging.getLogger(DOMAIN)
 
 
 def generic_parser(event):
-    logging.info(f"EVENT: {event}")
+    logger.info(f"Unhandled event: {event}")
 
 
 class LoggingProxy(web.Application):
@@ -81,13 +79,3 @@ class LoggingProxy(web.Application):
 
                     return server_response
 
-
-if __name__ == '__main__':
-    loglevel = "INFO"
-    logging.basicConfig(format='%(asctime)s %(name)s:%(levelname)s:%(message)s', level=loglevel)
-    logging.getLogger("aiohttp.access").setLevel("WARN")
-    logging.info("Server started http://%s:%s" % (hostName, serverPort))
-    app = LoggingProxy()
-    app.add_parser("https://www.goodwe-power.com/Acceptor/Datalog", goodwe_decode)
-
-    web.run_app(app, port=serverPort)

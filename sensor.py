@@ -19,8 +19,6 @@ from homeassistant.const import (
 )
 
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import *
 
@@ -101,13 +99,7 @@ async def async_setup_entry(
         async_add_entities
 ):
     """Config entry example."""
-    # assuming API object stored here by __init__.py
-    # entities: list[InverterSensor] = []
-    # proxy = hass.data[DOMAIN][config_entry.entry_id][KEY_PROXY]
     coordinator = hass.data[DOMAIN][config_entry.entry_id][KEY_COORDINATOR]
-    # device_info = hass.data[DOMAIN][config_entry.entry_id][KEY_DEVICE_INFO]
-
-    await coordinator.async_refresh()
     async_add_entities(InverterSensor(coordinator, tag=tag, **sensor) for tag, sensor in sensors.items())
 
 
