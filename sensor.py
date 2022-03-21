@@ -17,19 +17,14 @@ from homeassistant.const import (
     TIME_HOURS,
     TEMP_CELSIUS,
 )
-
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import *
-
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-)
 
 _LOGGER = logging.getLogger(__name__)
 
 sensors = {
-    # 'device_id': 'XXXXXXXXXXXXXXX',
     'voltage_pv1': {
         "uom": ELECTRIC_POTENTIAL_VOLT,
         "device_class": SensorDeviceClass.VOLTAGE,
@@ -100,18 +95,27 @@ async def async_setup_entry(
 ):
     """Config entry example."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id][KEY_COORDINATOR]
-    async_add_entities(InverterSensor(coordinator, tag=tag, **sensor) for tag, sensor in sensors.items())
+    serial_number = coordinator.serial_number
+    async_add_entities(
+        InverterSensor(
+            coordinator,
+            tag=tag,
+            **sensor,
+            serial_number=serial_number
+        ) for tag, sensor in sensors.items())
 
 
 class InverterSensor(CoordinatorEntity, SensorEntity):
     """Representation of a Sensor."""
 
-    def __init__(self, coordinator, tag, uom, device_class, state_class):
+    def __init__(self, coordinator, tag, uom, device_class, state_class, serial_number):
         super().__init__(coordinator=coordinator)
         self._attr_name = tag
         self._attr_native_unit_of_measurement = uom
         self._attr_device_class = device_class
         self._attr_state_class = state_class
+        self._attr_unique_id = f"{DOMAIN}-{tag}-{serial_number}"
+
 
     @callback
     def _handle_coordinator_update(self) -> None:

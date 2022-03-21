@@ -9,8 +9,7 @@
   "config_flow": true,
   "iot_class": "local_push",
   "loggers": [
-    "goodweproxy",
-    "goodwe-proxy-coordinator"
+    "goodweproxy"
   ],
   "version": "0.0.1"
 }
