@@ -17,13 +17,15 @@ _LOGGER = logging.getLogger(DOMAIN)
 
 
 class GoodweProxyCoordinator(DataUpdateCoordinator):
-    def __init__(self, serial_number, *args, **kwargs):
+    def __init__(self,  *args, serial_number, **kwargs,):
         super().__init__(*args, **kwargs)
         self.serial_number = serial_number
         proxy = LoggingProxy()
         proxy.add_parser("https://www.goodwe-power.com/Acceptor/Datalog", self.goodwe_decode)
 
         self.runner = web.AppRunner(proxy)
+
+    async def setup(self):
         await self.runner.setup()
         site = web.TCPSite(self.runner, port=8180)
         await site.start()
@@ -47,6 +49,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         name=name,
         serial_number=serial
     )
+
+    await coordinator.setup()
 
     device_info = DeviceInfo(
         configuration_url="https://www.semsportal.com",
