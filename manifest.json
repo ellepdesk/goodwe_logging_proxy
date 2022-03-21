@@ -1,15 +1,16 @@
 {
-  "domain": "goodwe",
+  "domain": "goodweproxy",
   "name": "GoodWe Inverter",
   "documentation": "https://github.com/ellepdesk/goodwe_logging_proxy/",
   "codeowners": [
     "@ellepdesk"
   ],
-  "requirements": [],
-  "config_flow": false,
+  "requirements": ["aiohttp"],
+  "config_flow": true,
   "iot_class": "local_push",
   "loggers": [
-    "goodwe"
+    "goodweproxy",
+    "goodwe-proxy-coordinator"
   ],
   "version": "0.0.1"
 }

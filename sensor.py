@@ -17,71 +17,21 @@ from homeassistant.const import (
     TIME_HOURS,
     TEMP_CELSIUS,
 )
-from homeassistant.core import HomeAssistant
+
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+
+from .const import *
+
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
-    DataUpdateCoordinator,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-
-def setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None
-) -> None:
-    """Set up the sensor platform."""
-    entities: list[InverterSensor] = []
-    # Individual inverter sensors entities
-    entities.extend(
-        InverterSensor(coordinator, device_info, inverter, sensor)
-        for sensor in inverter.sensors()
-        if not sensor.id_.startswith("xx")
-    )
-
-    async_add_entities(entities)
-
-
-class MyCoordinator(DataUpdateCoordinator):
-    """My custom coordinator."""
-
-    def __init__(self, hass, ):
-        """Initialize my coordinator."""
-        super().__init__(
-            hass,
-            _LOGGER,
-            # Name of the data. For logging purposes.
-            name="goodwe-coordinator",
-        )
-
-# push new data:
-# coordinator.async_set_updated_data(data)
-
-
-class InverterSensor(CoordinatorEntity, SensorEntity):
-    """Representation of a Sensor."""
-
-    def __init__(self, coordinator, tag, uom, device_class, state_class):
-        super().__init__(coordinator=coordinator)
-        self._attr_name = tag
-        self._attr_native_unit_of_measurement = uom
-        self._attr_device_class = device_class
-        self._attr_state_class = state_class
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self._attr_native_value = self.coordinator.data[self._attr_name]
-        self.async_write_ha_state()
-
-
-
 sensors = {
-    'device_id': 'XXXXXXXXXXXXXXX',
+    # 'device_id': 'XXXXXXXXXXXXXXX',
     'voltage_pv1': {
         "uom": ELECTRIC_POTENTIAL_VOLT,
         "device_class": SensorDeviceClass.VOLTAGE,
@@ -143,3 +93,40 @@ sensors = {
         "state_class": SensorStateClass.MEASUREMENT
     },
 }
+
+
+async def async_setup_entry(
+        hass,
+        config_entry,
+        async_add_entities
+):
+    """Config entry example."""
+    # assuming API object stored here by __init__.py
+    # entities: list[InverterSensor] = []
+    # proxy = hass.data[DOMAIN][config_entry.entry_id][KEY_PROXY]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id][KEY_COORDINATOR]
+    # device_info = hass.data[DOMAIN][config_entry.entry_id][KEY_DEVICE_INFO]
+
+    await coordinator.async_refresh()
+    async_add_entities(InverterSensor(coordinator, tag=tag, **sensor) for tag, sensor in sensors.items())
+
+
+class InverterSensor(CoordinatorEntity, SensorEntity):
+    """Representation of a Sensor."""
+
+    def __init__(self, coordinator, tag, uom, device_class, state_class):
+        super().__init__(coordinator=coordinator)
+        self._attr_name = tag
+        self._attr_native_unit_of_measurement = uom
+        self._attr_device_class = device_class
+        self._attr_state_class = state_class
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._attr_native_value = self.coordinator.data[self._attr_name]
+        self.async_write_ha_state()
+
+
+
+
