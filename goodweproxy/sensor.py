@@ -94,26 +94,29 @@ async def async_setup_entry(
 ):
     """Config entry example."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id][KEY_COORDINATOR]
+    device_info = hass.data[DOMAIN][config_entry.entry_id][KEY_DEVICE_INFO]
     serial_number = coordinator.serial_number
     async_add_entities(
         InverterSensor(
             coordinator,
             tag=tag,
             **sensor,
-            serial_number=serial_number
+            serial_number=serial_number,
+            device_info=device_info,
         ) for tag, sensor in sensors.items())
 
 
 class InverterSensor(CoordinatorEntity, SensorEntity):
     """Representation of a Sensor."""
 
-    def __init__(self, coordinator, tag, uom, device_class, state_class, serial_number):
+    def __init__(self, coordinator, tag, uom, device_class, state_class, serial_number, device_info):
         super().__init__(coordinator=coordinator)
         self._attr_name = tag
         self._attr_native_unit_of_measurement = uom
         self._attr_device_class = device_class
         self._attr_state_class = state_class
         self._attr_unique_id = f"{DOMAIN}-{tag}-{serial_number}"
+        self._attr_device_info = device_info
 
 
     @callback

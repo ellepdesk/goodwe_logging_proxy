@@ -41,7 +41,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     hass.data.setdefault(DOMAIN, {})
     name = config_entry.title
     serial = config_entry.data[CONF_SERIAL]
-
+    model = f"GW{serial[1:5]}-{serial[5:7]}"
     # Create update coordinator
     coordinator = GoodweProxyCoordinator(
         hass,
@@ -57,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         identifiers={(DOMAIN, serial)},
         name=config_entry.title,
         manufacturer="GoodWe",
-        model="test",
+        model=model,
     )
 
     config_entry.async_on_unload(config_entry.add_update_listener(update_listener))
