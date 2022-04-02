@@ -31,9 +31,12 @@ class GoodweProxyCoordinator(DataUpdateCoordinator):
         await site.start()
 
     def goodwe_decode(self, event):
-        data = decode(event['data'])
-        if data.pop('device_id') == self.serial_number:
-            self.async_set_updated_data(data)
+        try:
+            data = decode(event['data'])
+            if data.pop('device_id') == self.serial_number:
+                self.async_set_updated_data(data)
+        except ValueError:
+            _LOGGER.info(f"Skipped message: ({event})")
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
