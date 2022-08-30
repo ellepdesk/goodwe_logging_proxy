@@ -109,6 +109,10 @@ async def async_setup_entry(
 class InverterSensor(CoordinatorEntity, SensorEntity):
     """Representation of a Sensor."""
 
+    @property
+    def available(self) -> bool:
+        return self.coordinator.has_recent_data
+
     def __init__(self, coordinator, tag, uom, device_class, state_class, serial_number, device_info):
         super().__init__(coordinator=coordinator)
         self._attr_name = tag
