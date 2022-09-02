@@ -10,11 +10,11 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from aiohttp import web
+from datetime import datetime, timedelta
 
 from .const import *
 
 _LOGGER = logging.getLogger(DOMAIN)
-
 
 class GoodweProxyCoordinator(DataUpdateCoordinator):
     def __init__(self,  *args, serial_number, **kwargs,):
@@ -22,7 +22,7 @@ class GoodweProxyCoordinator(DataUpdateCoordinator):
         self.serial_number = serial_number
         proxy = LoggingProxy()
         proxy.add_parser("https://www.goodwe-power.com/Acceptor/Datalog", self.goodwe_decode)
-
+        self.last_data = None
         self.runner = web.AppRunner(proxy)
 
     async def setup(self):
@@ -30,10 +30,17 @@ class GoodweProxyCoordinator(DataUpdateCoordinator):
         site = web.TCPSite(self.runner, port=8180)
         await site.start()
 
+    @property
+    def has_recent_data(self):
+        if self.last_data:
+            return datetime.utcnow() - self.last_data <= timedelta(seconds=60)
+        return False
+
     def goodwe_decode(self, event):
         try:
             data = decode(event['data'])
             if data.pop('device_id') == self.serial_number:
+                self.last_data = datetime.utcnow()
                 self.async_set_updated_data(data)
         except ValueError:
             _LOGGER.info(f"Skipped message: ({event})")

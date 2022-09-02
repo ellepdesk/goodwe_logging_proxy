@@ -1,6 +1,6 @@
 
 def decode(payload):
-    if len(payload) is not 66:
+    if len(payload) != 66:
         raise ValueError
     return {
         "device_id": payload[1:17].decode('ascii'),
