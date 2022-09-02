@@ -3,7 +3,7 @@ Intercept calls from inverter to goodwe api and decode the payload
 
 ### Installation
 
-This integration requires some magic to intercept the calls from the inverter and read teh content. The request is passed to the 'real' goodwe server to be visible in SEMS.
+This integration requires some magic to intercept the calls from the inverter and read the content. The request is passed to the 'real' goodwe server to be visible in SEMS.
 
 This has the additional benefit that the calls to goodwe can now be https, as the push server from goodwe accepts this.
 
@@ -26,3 +26,5 @@ This is only allowed for the vlan ip-range
 
 #### Home Assistant
 Copy the folder `goodweproxy` to `<config_dir>/custom_components/`.
+
+For example: sudo cp -r goodweproxy/ /etc/docker/homeassistant/custom_components/
