@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from os import environ
 
 from aiohttp import web
 
@@ -27,7 +28,8 @@ class GoodweProxyCoordinator(DataUpdateCoordinator):
 
     async def setup(self):
         await self.runner.setup()
-        site = web.TCPSite(self.runner, port=8180)
+	port = int(environ.get("GOODWE_PROXY_PORT", "8180"))
+        site = web.TCPSite(self.runner, port=port)
         await site.start()
 
     def goodwe_decode(self, event):
