@@ -71,7 +71,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     )
 
     config_entry.async_on_unload(config_entry.add_update_listener(update_listener))
-    hass.config_entries.async_setup_platforms(config_entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     hass.data[DOMAIN][config_entry.entry_id] = {
         KEY_COORDINATOR: coordinator,
