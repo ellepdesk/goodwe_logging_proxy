@@ -37,6 +37,7 @@ class GoodWeProxyCoordinator(DataUpdateCoordinator):
         self.serial_number = serial_number
         proxy = LoggingProxy()
         proxy.add_parser("https://www.goodwe-power.com/Acceptor/Datalog", self.goodwe_decode)
+        proxy.add_parser("http://www.goodwe-power.com/Acceptor/Datalog", self.goodwe_decode)
         self.last_data = None
         self.runner = web.AppRunner(proxy)
 
