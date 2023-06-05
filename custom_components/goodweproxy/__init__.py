@@ -9,7 +9,7 @@ from .logging_proxy import LoggingProxy
 from .goodwedecoder import decode
 from .const import *
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config import ConfigType
 from homeassistant.core import HomeAssistant
 from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
@@ -126,7 +126,7 @@ sensors = {
 }
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities) -> bool:
+async def async_setup_platform(hass: HomeAssistant, config_entry: ConfigType, add_entities) -> bool:
     """Set up the Goodwe components from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     name = config_entry.title
@@ -158,7 +158,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         KEY_DEVICE_INFO: device_info,
     }
 
-    async_add_entities(
+    add_entities(
         GoodWeSensor(
             coordinator,
             tag=tag,
