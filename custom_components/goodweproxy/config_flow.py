@@ -12,7 +12,7 @@ from .const import DOMAIN, DEFAULT_NAME, CONF_SERIAL
 CONFIG_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_SERIAL): cv.string,
-        vol.Optional(CONF_PORT, default=8180): cv.int,
+        vol.Optional(CONF_PORT, default=8180): cv.port,
     }
 )
 

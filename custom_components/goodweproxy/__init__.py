@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
-
 from homeassistant.const import CONF_PORT
-from goodweplatform import GoodWeProxyCoordinator
+
+from .goodweplatform import GoodWeProxyCoordinator
 
 from .const import *
 
