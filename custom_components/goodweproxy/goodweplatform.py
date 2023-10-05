@@ -15,9 +15,12 @@ class GoodWeProxyCoordinator(DataUpdateCoordinator):
         super().__init__(*args, **kwargs)
         self.serial_number = serial_number
         self.port = port
-        proxy = LoggingProxy()
-        proxy.add_parser("https://www.goodwe-power.com/Acceptor/Datalog", self.goodwe_decode)
-        proxy.add_parser("http://www.goodwe-power.com/Acceptor/Datalog", self.goodwe_decode)
+        proxy = LoggingProxy(
+            schema="http://",
+            host="www.goodwe-power.com",
+            path="/Acceptor/Datalog",
+            callback=self.goodwe_decode,
+        )
         self.last_data = None
         self.runner = web.AppRunner(proxy)
 
@@ -36,11 +39,14 @@ class GoodWeProxyCoordinator(DataUpdateCoordinator):
         return False
 
     def goodwe_decode(self, event):
+        _LOGGER.info(f"goodwe_decode({event})")
+
         try:
             data = decode(event['data'])
             if data.pop('device_id') == self.serial_number:
                 self.last_data = datetime.utcnow()
                 self.async_set_updated_data(data)
+            return self.serial_number
         except ValueError:
             _LOGGER.info(f"Skipped message: ({event})")
 
