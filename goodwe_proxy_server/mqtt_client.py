@@ -19,6 +19,7 @@ discovery_prefix = "homeassistant"
 component = "sensor"
 node_id = f"goodwe_{unique_id}"
 object_id = "goodwe"
+expire_after_s = 600
 
 
 sensors = [
@@ -44,7 +45,7 @@ sensors = [
         "state_class": "measurement"
     },
     {
-        "name": "DC Current String 1",
+        "name": "DC Current String 2",
         "tag": 'current_pv2',
         "uom": "A",
         "device_class": "current",
@@ -107,11 +108,12 @@ sensors = [
         "state_class": "total_increasing"
     },
 ]
+topic_prefix = f"{discovery_prefix}/{component}/{node_id}"
 
-state_topic = f"{discovery_prefix}/{component}/{node_id}/state"
+state_topic = f"{topic_prefix}/state"
 
 class MqttClient:
-    def __init__(self, hostname) -> None:
+    def __init__(self, hostname: str) -> None:
         self.hostname = hostname
         self.message_queue = asyncio.Queue()
 
@@ -123,11 +125,11 @@ class MqttClient:
         except (KeyboardInterrupt, CancelledError):
             pass
 
-    async def publish_discovery(self, client):
+    async def publish_discovery(self, client: aiomqtt.Client):
         for s in sensors:
             object_id = s['tag']
 
-            discovery_topic = f"{discovery_prefix}/{component}/{node_id}/{object_id}/config"
+            discovery_topic = f"{topic_prefix}/{object_id}/config"
             discovery_message = {
                 "name": s["name"],
                 "device_class": s['device_class'],
@@ -143,22 +145,22 @@ class MqttClient:
                     "model": "GW-3600-DS"
                 }
             }
+            if s['state_class'] == 'measurement':
+                discovery_message['expire_after'] = expire_after_s
             await client.publish(
                 discovery_topic,
                 json.dumps(discovery_message, indent=2),
                 retain=True,
                 )
 
-    async def publish_queue(self, client):
+    async def publish_queue(self, client: aiomqtt.Client):
         while True:
-            message = await self.message_queue.get()
-            logger.info(f"mqtt message: f{message} on topic: {state_topic}")
+            (topic, message) = await self.message_queue.get()
+            logger.info(f"mqtt message: f{message} on topic: {topic}")
             await client.publish(
-                state_topic,
+                topic,
                 json.dumps(message, indent=2))
 
-    async def push(self, message):
-        return await self.message_queue.put(message)
+    async def push(self, message:dict):
+        await self.message_queue.put((state_topic, message))
 
-    def create_task(self):
-        return asyncio.create_task(self.run(), name=__name__)
