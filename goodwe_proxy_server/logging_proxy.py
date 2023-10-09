@@ -2,9 +2,8 @@ import logging
 from aiohttp import web
 from aiohttp import ClientSession
 from datetime import datetime as dt
-from .const import DOMAIN
 
-logger = logging.getLogger(DOMAIN)
+logger = logging.getLogger(__name__)
 
 
 def generic_parser(event):
@@ -35,6 +34,8 @@ class LoggingProxy(web.Application):
                 url = f"{self.schema}{self.host}{self.path}"
                 data = await server_request.content.read()
 
+
+                logger.warning(f'GOT: data: {data}')
                 async with session.request(
                         method,
                         url,
@@ -55,9 +56,11 @@ class LoggingProxy(web.Application):
                 for h in ("Transfer-Encoding", "Connection"):
                     r_headers.pop(h, None)
                 server_response = web.StreamResponse(
+                    # status = 200,
                     status=status,
                     headers=r_headers
                 )
+                # client_data = b"Success\n"
                 await server_response.prepare(server_request)
                 await server_response.write(client_data)
 
@@ -70,9 +73,6 @@ class LoggingProxy(web.Application):
                     "response_headers": r_headers,
                     "timestamp": dt.now(),
                 }
-                response = self._callback(event)
-                if response != client_data:
-                    print("expected: {response} got: {server_response}")
-
+                response = await self.callback(event)
                 return server_response
 
