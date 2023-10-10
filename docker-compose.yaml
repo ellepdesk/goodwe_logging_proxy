@@ -1,0 +1,8 @@
+version: "3"
+services:
+  goodwe:
+    container_name: goodwe-mqtt-bridge
+    image: registry.ellepdesk.nl/goodwe-mqtt-bridge
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: mosquitto

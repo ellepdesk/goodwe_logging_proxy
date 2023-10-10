@@ -1,5 +1,5 @@
 
-def decode(payload):
+def decode_1phase(payload):
     if len(payload) != 66:
         raise ValueError
     return {

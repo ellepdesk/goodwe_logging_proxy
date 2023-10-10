@@ -6,14 +6,12 @@ RUN pip install setuptools wheel
 RUN pip wheel -r requirements.txt
 
 
-
 FROM python:3.11-alpine
 WORKDIR /app
 
 # install python lib
 COPY --from=builder /install/*.whl /tmp/
 RUN pip install /tmp/*.whl
-
 
 COPY goodwe_proxy_server/* ./
 

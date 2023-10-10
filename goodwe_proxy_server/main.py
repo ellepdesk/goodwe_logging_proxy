@@ -1,16 +1,15 @@
 import os
 import asyncio
 import logging
-from goodwe_server import GoodWeProxy
-from mqtt_client import MqttClient
+from goodweproxy import GoodWeProxy
+from goodwemqttclient import MqttClient
 
 port = os.environ.get('PORT', 80)
 mqtt_host = os.environ['MQTT_HOST']
 
 async def main():
-    proxy = GoodWeProxy(port=port)
     mqtt = MqttClient(hostname=mqtt_host)
-    proxy.callback = mqtt.push
+    proxy = GoodWeProxy(port=port, datalog_callback=mqtt.push)
     await proxy.setup()
     try:
         await mqtt.run()
