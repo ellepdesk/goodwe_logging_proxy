@@ -28,7 +28,7 @@ class GoodWeProxy(web.Application):
                 data = await server_request.content.read()
                 logger.warning(f'GOT: data: {data}')
 
-                url = f"http://{orig_host}/Acceptor/Datalog"
+                url = f"https://{orig_host}/Acceptor/Datalog"
                 async with session.request(
                         method,
                         url,
