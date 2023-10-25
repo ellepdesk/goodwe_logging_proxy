@@ -7,6 +7,8 @@ from asyncio.exceptions import CancelledError
 
 logger = logging.getLogger(__name__)
 
+
+# Sensor definitions for discovery
 sensors = [
     {
         "name": "DC Voltage String 1",
@@ -94,8 +96,8 @@ sensors = [
     },
 ]
 
-discovery_prefix = "homeassistant"
-component = "sensor"
+
+discovery_prefix = os.environ.get('DISCOVERY_PREFIX',"homeassistant")
 
 
 class MqttClient:
@@ -107,17 +109,20 @@ class MqttClient:
     async def run(self):
         try:
             async with aiomqtt.Client(hostname=self.hostname) as client:
+                logger.info(f"Connected to mqtt server at {self.hostname}")
                 await self.publish_queue(client)
         except (KeyboardInterrupt, CancelledError):
             pass
 
-    async def publish_discovery(self, client: aiomqtt.Client, serial):
+    async def publish_discovery(self, client: aiomqtt.Client, serial: str):
+        logger.info(f"Publishing discovery for: {serial}")
         node_id = f"goodwe_{serial}"
-        topic_prefix = f"{discovery_prefix}/{component}/{node_id}"
+        topic_prefix = f"{discovery_prefix}/sensor/{node_id}"
         state_topic = f"{topic_prefix}/state"
         object_id = "goodwe"
         expire_after_s = 600
 
+        # register all sensors
         for s in sensors:
             object_id = s["tag"]
 
@@ -137,8 +142,11 @@ class MqttClient:
                     "model": "GW-3600-DS",
                 },
             }
+            # only real-time measurements have a limited validity
             if s["state_class"] == "measurement":
                 discovery_message["expire_after"] = expire_after_s
+
+            logger.debug(f"mqtt message: f{discovery_message} on topic: {discovery_topic}")
             await client.publish(
                 discovery_topic,
                 json.dumps(discovery_message, indent=2),
@@ -149,13 +157,17 @@ class MqttClient:
         while True:
             message = await self.message_queue.get()
             serial = message.get("device_id")
+
+            if not serial:
+                continue
+
+            # check if device is known, else (re-)publish discovery messages
             if serial not in self.known_serials:
                 self.known_serials.add(serial)
                 await self.publish_discovery(client, serial)
 
-            node_id = f"goodwe_{serial}"
-            topic = f"{discovery_prefix}/{component}/{node_id}/state"
-            logger.info(f"mqtt message: f{message} on topic: {topic}")
+            topic = f"{discovery_prefix}/sensor/goodwe_{serial}/state"
+            logger.debug(f"mqtt message: f{message} on topic: {topic}")
             await client.publish(topic, json.dumps(message, indent=2))
 
     async def push(self, message: dict):
