@@ -28,3 +28,5 @@ This is only allowed for the vlan ip-range
 Copy the folder `goodweproxy` to `<config_dir>/custom_components/`.
 
 For example: sudo cp -r goodweproxy/ /etc/docker/homeassistant/custom_components/
+
+Envirment variable "GOODWE_PROXY_PORT" allows to adjust the proxy port. Defaults to 80
