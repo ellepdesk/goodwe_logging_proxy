@@ -28,4 +28,3 @@ def decode_1phase(payload):
         # "country": payload[62:64].hex(), # maybe?
         "kwh_daily": int.from_bytes(payload[64:66], "big") / 10,
     }
-
