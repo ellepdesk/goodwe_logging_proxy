@@ -13,7 +13,7 @@ WORKDIR /app
 COPY --from=builder /install/*.whl /tmp/
 RUN pip install /tmp/*.whl
 
-COPY goodwe_proxy_server/* ./
+COPY goodwe_proxy_server/*.py ./
 
 # run as user and group 1000
 USER 1000:1000
