@@ -1,5 +1,5 @@
 
-def decode(payload):
+def decode_1phase(payload):
     if len(payload) != 66:
         raise ValueError
     return {
@@ -13,13 +13,18 @@ def decode(payload):
         "current_ac": int.from_bytes(payload[30:32], "big") / 10,
         "freq_ac": int.from_bytes(payload[32:34], "big") / 100,
         "power_ac": int.from_bytes(payload[34:36], "big"),
-        # "unknown_1": payload[36:38].hex(),
+        # "work_mode": payload[36:38].hex(),
         "temperature": int.from_bytes(payload[38:40], "big") / 10,
-        # "unknown_2": payload[40:44].hex(),
+        # "error msg": payload[40:44].hex(),
         "kwh_total": int.from_bytes(payload[44:48], "big") / 10,
         "hours_total": int.from_bytes(payload[48:52], "big"),
+        # "sw_version:
+        # "WarningCode":
+        # "FunctionsBitsValue"
+        # "BUSVoltage"
+        # "NBUSVoltage"
+        # "GFCIFaultValue"
         # "unknown_3": payload[52:64].hex(),
         # "country": payload[62:64].hex(), # maybe?
         "kwh_daily": int.from_bytes(payload[64:66], "big") / 10,
     }
-
