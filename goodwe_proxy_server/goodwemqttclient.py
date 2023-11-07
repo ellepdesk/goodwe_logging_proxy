@@ -122,6 +122,10 @@ class MqttClient:
         object_id = "goodwe"
         expire_after_s = 600
 
+        # num_phases = serial[0]
+        power = serial[1:5]
+        series = serial[5:7]
+
         # register all sensors
         for s in sensors:
             object_id = s["tag"]
@@ -139,7 +143,7 @@ class MqttClient:
                     "identifiers": [f"{serial}"],
                     "name": "GoodWe Inverter",
                     "manufacturer": "GoodWe",
-                    "model": "GW-3600-DS",
+                    "model": f"GW-{power}-{series}",
                 },
             }
             # only real-time measurements have a limited validity
