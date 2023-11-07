@@ -2,7 +2,10 @@ version: "3"
 services:
   goodwe:
     container_name: goodwe-mqtt-bridge
-    image: registry.ellepdesk.nl/goodwe-mqtt-bridge
+    build: https://github.com/ellepdesk/goodwe_logging_proxy.git#mqtt
+    pull_policy: build
     restart: unless-stopped
     environment:
       MQTT_HOST: mosquitto
+      PORT: 80
+      LOGLEVEL: INFO
