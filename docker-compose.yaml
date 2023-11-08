@@ -2,7 +2,7 @@ version: "3"
 services:
   goodwe:
     container_name: goodwe-mqtt-bridge
-    build: https://github.com/ellepdesk/goodwe_logging_proxy.git#mqtt
+    build: https://github.com/ellepdesk/goodwe_logging_proxy.git
     pull_policy: build
     restart: unless-stopped
     environment:
