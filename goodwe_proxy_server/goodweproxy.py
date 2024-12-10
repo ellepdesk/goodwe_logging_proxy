@@ -50,7 +50,7 @@ class GoodWeProxy(web.Application):
                 headers=r_headers
             )
             await server_response.prepare(server_request)
-            await server_response.write(client_data)
+            await server_response.write_eof(client_data)
 
             event = {
                 "url": url,
