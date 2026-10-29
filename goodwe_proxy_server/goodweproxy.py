@@ -21,9 +21,7 @@ class GoodWeProxy(web.Application):
         self.datalog_callback = datalog_callback
         self.forward = forward
         self.add_routes([web.post("/Acceptor/Datalog", self.post_datalog)])
-        # without forwarding, GetSendInterval gets the default 404, which is also what GoodWe answered
-        if forward:
-            self.add_routes([web.post("/Acceptor/GetSendInterval", self.post_sendinterval)])
+        self.add_routes([web.post("/Acceptor/GetSendInterval", self.post_sendinterval)])
 
     async def forward_request(self, server_request, data):
         headers = dict(server_request.headers)
@@ -52,9 +50,13 @@ class GoodWeProxy(web.Application):
         return web.Response(status=status, headers=r_headers, body=client_data)
 
     async def post_sendinterval(self, request):
-        response = await self.forward_request(request, await request.read())
-        if response is None:
-            return web.Response(status=502)
+        # Reproduces GoodWe's reply on the wire: an empty chunked body ("0\r\n\r\n"). The
+        # inverter doesn't parse chunked encoding and takes those bytes as a ~11 s send
+        # interval; any other reply (e.g. a 404) leaves it at its default of 8 minutes.
+        response = web.StreamResponse()
+        response.enable_chunked_encoding()
+        await response.prepare(request)
+        await response.write_eof()
         return response
 
     async def post_datalog(self, request):
