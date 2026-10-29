@@ -6,7 +6,11 @@ from goodwedecoder import decode_1phase
 
 logger = logging.getLogger(__name__)
 
-UPSTREAM_TIMEOUT = ClientTimeout(total=10)
+# the inverter gives up after ~10 s, so answer locally well before that
+UPSTREAM_TIMEOUT = ClientTimeout(total=5)
+# GoodWe answers every Datalog (handshake and measurements) with the serial plus these
+# fixed bytes; the inverter keeps re-sending its handshake until it gets this reply
+DATALOG_ACK_SUFFIX = bytes.fromhex("000000000384")
 
 
 class GoodWeProxy(web.Application):
@@ -38,7 +42,7 @@ class GoodWeProxy(web.Application):
                     client_data = await client_request.read()
         except (ClientError, asyncio.TimeoutError) as e:
             logger.warning(f"Forwarding to {url} failed: {e!r}")
-            return web.Response(status=502)
+            return None
 
         for h in ("Transfer-Encoding", "Connection", "Content-Length", "Content-Encoding"):
             r_headers.pop(h, None)
@@ -46,7 +50,10 @@ class GoodWeProxy(web.Application):
         return web.Response(status=status, headers=r_headers, body=client_data)
 
     async def post_sendinterval(self, request):
-        return await self.forward_request(request, await request.read())
+        response = await self.forward_request(request, await request.read())
+        if response is None:
+            return web.Response(status=502)
+        return response
 
     async def post_datalog(self, request):
         data = await request.read()
@@ -57,7 +64,10 @@ class GoodWeProxy(web.Application):
             await self.datalog_callback(message)
         except ValueError:
             logger.debug(f"Skipped message: {data.hex()}")
-        return await self.forward_request(request, data)
+        response = await self.forward_request(request, data)
+        if response is None:
+            return web.Response(body=data[1:17] + DATALOG_ACK_SUFFIX)
+        return response
 
     async def setup(self):
         await self.runner.setup()
