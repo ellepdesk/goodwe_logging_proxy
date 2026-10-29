@@ -1,11 +1,12 @@
 import logging
 import asyncio
 from aiohttp import web
-from aiohttp import ClientSession
-from datetime import datetime as dt
+from aiohttp import ClientError, ClientSession, ClientTimeout
 from goodwedecoder import decode_1phase
 
 logger = logging.getLogger(__name__)
+
+UPSTREAM_TIMEOUT = ClientTimeout(total=10)
 
 
 class GoodWeProxy(web.Application):
@@ -18,64 +19,45 @@ class GoodWeProxy(web.Application):
         self.add_routes([web.post("/Acceptor/GetSendInterval", self.post_sendinterval)])
 
 
-    async def forward_request(self, server_request):
-        if server_request.method == "CONNECT":
-            await server_request.read()
-        else:
-            async with ClientSession() as session:
-                method = server_request.method
-                headers = dict(server_request.headers)
-                orig_host = headers.pop('Host')
-                data = await server_request.content.read()
-                path = server_request.path
-                url = f"https://{orig_host}/{path}"
-                logger.debug(f'GOT: request, forwarding to {url}, data: {data}')
+    async def forward_request(self, server_request, data):
+        headers = dict(server_request.headers)
+        orig_host = headers.pop('Host')
+        # GoodWe's server stopped answering over HTTPS; the inverter itself uses plain HTTP
+        url = f"http://{orig_host}{server_request.path}"
+        logger.debug(f'GOT: request, forwarding to {url}, data: {data}')
+        try:
+            async with ClientSession(timeout=UPSTREAM_TIMEOUT) as session:
                 async with session.request(
-                        method,
+                        server_request.method,
                         url,
                         data=data,
                         headers=headers,
                 ) as client_request:
                     status = client_request.status
                     r_headers = dict(client_request.headers)
+                    client_data = await client_request.read()
+        except (ClientError, asyncio.TimeoutError) as e:
+            logger.warning(f"Forwarding to {url} failed: {e!r}")
+            return web.Response(status=502)
 
-                    client_data = b""
-                    while (chunk := await client_request.content.read()):
-                        client_data += chunk
-
-            for h in ("Transfer-Encoding", "Connection"):
-                r_headers.pop(h, None)
-            server_response = web.StreamResponse(
-                status=status,
-                headers=r_headers
-            )
-            await server_response.prepare(server_request)
-            await server_response.write(client_data)
-
-            event = {
-                "url": url,
-                "data": data,
-                "headers": headers,
-                "status_code": status,
-                "response": client_data,
-                "response_headers": r_headers,
-                "timestamp": dt.now(),
-            }
-            return event
+        for h in ("Transfer-Encoding", "Connection", "Content-Length", "Content-Encoding"):
+            r_headers.pop(h, None)
+        logger.debug(f"Response from {url}: {status} {client_data}")
+        return web.Response(status=status, headers=r_headers, body=client_data)
 
     async def post_sendinterval(self, request):
-        event = await self.forward_request(request)
-        logger.debug(f"GetSendInterval: {event}")
+        return await self.forward_request(request, await request.read())
 
     async def post_datalog(self, request):
-        event = await self.forward_request(request)
+        data = await request.read()
+        # publish before forwarding, so an unreachable GoodWe server doesn't block local data
         try:
-            data = decode_1phase(event['data'])
-            data['raw'] = event['data'].hex()
-            data['response_raw'] = event['response'].hex()
-            await self.datalog_callback(data)
+            message = decode_1phase(data)
+            message['raw'] = data.hex()
+            await self.datalog_callback(message)
         except ValueError:
-            logger.debug(f"Skipped message: ({event})")
+            logger.debug(f"Skipped message: {data.hex()}")
+        return await self.forward_request(request, data)
 
     async def setup(self):
         await self.runner.setup()
