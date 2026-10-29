@@ -94,8 +94,40 @@ sensors = [
         "device_class": "energy",
         "state_class": "total_increasing",
     },
+    {
+        "name": "Work Mode",
+        "tag": "work_mode",
+        "icon": "mdi:solar-power",
+    },
+    {
+        "name": "Errors",
+        "tag": "errors",
+        "icon": "mdi:alert-circle-outline",
+    },
+    {
+        "name": "Error Code",
+        "tag": "error_code",
+        "entity_category": "diagnostic",
+    },
+    {
+        "name": "DC Bus Voltage",
+        "tag": "voltage_bus",
+        "uom": "V",
+        "device_class": "voltage",
+        "state_class": "measurement",
+        "entity_category": "diagnostic",
+    },
 ]
 
+
+# sensor key -> discovery field, included only when the sensor sets it
+optional_fields = {
+    "uom": "unit_of_measurement",
+    "device_class": "device_class",
+    "state_class": "state_class",
+    "entity_category": "entity_category",
+    "icon": "icon",
+}
 
 discovery_prefix = os.environ.get('DISCOVERY_PREFIX',"homeassistant")
 
@@ -133,9 +165,6 @@ class MqttClient:
             discovery_topic = f"{topic_prefix}/{object_id}/config"
             discovery_message = {
                 "name": s["name"],
-                "device_class": s["device_class"],
-                "state_class": s["state_class"],
-                "unit_of_measurement": s["uom"],
                 "state_topic": state_topic,
                 "unique_id": f"{object_id}_{serial}",
                 "value_template": "{{ value_json." + f"{object_id}" + " }}",
@@ -146,8 +175,11 @@ class MqttClient:
                     "model": f"GW-{power}-{series}",
                 },
             }
-            # only real-time measurements have a limited validity
-            if s["state_class"] == "measurement":
+            for key, field in optional_fields.items():
+                if key in s:
+                    discovery_message[field] = s[key]
+            # totals keep their last value overnight; everything else is real-time
+            if not s.get("state_class", "").startswith("total"):
                 discovery_message["expire_after"] = expire_after_s
 
             logger.debug(f"mqtt message: f{discovery_message} on topic: {discovery_topic}")
