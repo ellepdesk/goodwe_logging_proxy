@@ -1,5 +1,5 @@
 # Goodwe logging proxy
-Intercept calls from inverter to goodwe api and decode the payload.
+Intercept calls from inverter to goodwe api, decode the payload and answer locally.
 
 The result is published on MQTT, with automatic discovery.
 
@@ -9,9 +9,9 @@ Multiple inverters are supported without configuration.
 
 ### Installation
 
-This integration requires some magic to intercept the calls from the inverter and read the content. The request is passed to the 'real' goodwe server to be visible in SEMS.
+This integration requires some magic to intercept the calls from the inverter and read the content. By default nothing is passed on to the 'real' goodwe server: the proxy answers the inverter itself, so the data doesn't show up in SEMS.
 
-This has the additional benefit that the calls to goodwe can now be https, as the push server from goodwe accepts this.
+Set `FORWARD_TO_GOODWE=true` to also pass the requests on to goodwe (over plain http, as their https endpoint no longer answers). If goodwe doesn't answer within 5 seconds, the proxy answers the inverter itself. Data is published on MQTT either way.
 
 #### Docker-compose
 The code is run as a docker container, the compose file from the repo will pull the latest version from github and build it upon install.

@@ -14,14 +14,16 @@ DATALOG_ACK_SUFFIX = bytes.fromhex("000000000384")
 
 
 class GoodWeProxy(web.Application):
-    def __init__(self, port, datalog_callback):
+    def __init__(self, port, datalog_callback, forward=False):
         super().__init__()
         self.runner = web.AppRunner(self)
         self.port = port
         self.datalog_callback = datalog_callback
+        self.forward = forward
         self.add_routes([web.post("/Acceptor/Datalog", self.post_datalog)])
-        self.add_routes([web.post("/Acceptor/GetSendInterval", self.post_sendinterval)])
-
+        # without forwarding, GetSendInterval gets the default 404, which is also what GoodWe answered
+        if forward:
+            self.add_routes([web.post("/Acceptor/GetSendInterval", self.post_sendinterval)])
 
     async def forward_request(self, server_request, data):
         headers = dict(server_request.headers)
@@ -64,10 +66,11 @@ class GoodWeProxy(web.Application):
             await self.datalog_callback(message)
         except ValueError:
             logger.debug(f"Skipped message: {data.hex()}")
-        response = await self.forward_request(request, data)
-        if response is None:
-            return web.Response(body=data[1:17] + DATALOG_ACK_SUFFIX)
-        return response
+        if self.forward:
+            response = await self.forward_request(request, data)
+            if response is not None:
+                return response
+        return web.Response(body=data[1:17] + DATALOG_ACK_SUFFIX)
 
     async def setup(self):
         await self.runner.setup()
