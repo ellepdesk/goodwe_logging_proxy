@@ -21,7 +21,7 @@ def test_decodes_capture():
     assert m["work_mode"] == "Normal"
     assert m["temperature"] == 31.3
     assert m["error_code"] == 0
-    assert m["errors"] == "None"
+    assert m["errors"] == "OK"
     assert m["kwh_total"] == 18692.1
     assert m["hours_total"] == 32764
     assert m["voltage_bus"] == 364.1

@@ -43,7 +43,7 @@ def decode_errors(code):
         for bit in range(32)
         if code & (1 << bit)
     ]
-    return ", ".join(names) if names else "None"
+    return ", ".join(names) if names else "OK"
 
 
 def decode_1phase(payload):
